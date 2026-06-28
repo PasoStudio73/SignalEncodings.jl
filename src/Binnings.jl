@@ -1,5 +1,6 @@
 module Binnings
 
-# Write your package code here.
+using Random: AbstractRNG, Xoshiro
+using StatsBase: sample, quantile
 
 end
