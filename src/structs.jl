@@ -13,7 +13,6 @@ const JenksErrNorm = Dict(
     :l1 => (lin_deviation, are),
     :l2 => (sq_deviation, gvf)
 )
-const JenksInitMode = [:maxentropy, :rand]
 
 """
 max_nobs::Int determine how many rows to sample for the quantile estimation.
@@ -53,8 +52,8 @@ struct Quantile{S<:Float} <: AbstractBinningConfig
         rng::AbstractRNG=Xoshiro(42),
         float_type::Type{S}=Float32
     ) where {S<:Float}
-        check_parameters(type)
         check_parameters(nbins, max_nobs)
+        check_quantiles(type)
 
         new{float_type}(nbins, AlphaBetaQuantiles[type]..., max_nobs, rng)
     end
@@ -67,7 +66,6 @@ struct Jenks{S<:Float} <: AbstractBinningConfig
     fluxadjust::Real
     fluxadjust_bothways::Bool
     errornorm::Tuple{Base.Callable,Base.Callable}
-    initmode::Symbol
     max_nobs::Int
     rng::AbstractRNG
 
@@ -78,13 +76,12 @@ struct Jenks{S<:Float} <: AbstractBinningConfig
         fluxadjust::Real=1.03,
         fluxadjust_bothways::Bool=true,
         errornorm::Symbol=:l1,
-        initmode::Symbol=:maxentropy,
         max_nobs::Int=1000,
         rng::AbstractRNG=Xoshiro(42),
         float_type::Type{S}=Float32
     ) where {S<:Float}
         check_parameters(nbins, max_nobs)
-        check_parameters(errornorm, initmode)
+        check_errnorm(errornorm)
 
         new{float_type}(
             nbins,
@@ -93,7 +90,6 @@ struct Jenks{S<:Float} <: AbstractBinningConfig
             fluxadjust,
             fluxadjust_bothways,
             JenksErrNorm[errornorm],
-            initmode,
             max_nobs,
             rng
         )
@@ -105,16 +101,14 @@ function check_parameters(nbins::Int, max_nobs::Int)
     @assert max_nobs ≥ 1 "max_nobs must be ≥ 1, got $max_nobs"
 end
 
-function check_parameters(type::Symbol)
+function check_quantiles(type::Symbol)
     @assert haskey(AlphaBetaQuantiles, type)
         "type must be one of $(keys(AlphaBetaQuantiles)), got :$type"
 end
 
-function check_parameters(errornorm::Symbol, initmode::Symbol)
+function check_errnorm(errornorm::Symbol)
     @assert haskey(JenksErrNorm, errornorm)
         "errornorm must be one of $(keys(JenksErrNorm)), got :$errornorm"
-    @assert initmode in JenksInitMode
-        "initmode must be one of $(keys(JenksInitMode)), got :$initmode"
 end
 
 get_nbins(b::AbstractBinningConfig) = b.nbins
@@ -124,6 +118,15 @@ get_rng(b::AbstractBinningConfig) = b.rng
 get_alpha(b::Quantile) = b.alpha
 get_beta(b::Quantile) = b.beta
 
-const BinningConfig{S} = Union{Uniform{S}, Quantile{S}}
+get_maxiter(b::Jenks) = b.maxiter
+get_flux(b::Jenks) = b.flux
+get_fluxadjust(b::Jenks) = b.fluxadjust
+get_fluxadjust_bothways(b::Jenks) = b.fluxadjust_bothways
+get_errornorm(b::Jenks) = b.errornorm
+get_initmode(b::Jenks) = b.initmode
+get_deviation(b::Jenks) = b.errornorm[1]
+get_global_errornorm(b::Jenks) = b.errornorm[2]
+
+const BinningConfig{S} = Union{Uniform{S}, Quantile{S}, Jenks{S}}
 
 

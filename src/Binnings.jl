@@ -1,7 +1,7 @@
 module Binnings
 
 using Random: AbstractRNG, Xoshiro
-using StatsBase: sample
+using StatsBase: mean, sample
 using Statistics: quantile
 
 # abstract type AbstractBinning end
