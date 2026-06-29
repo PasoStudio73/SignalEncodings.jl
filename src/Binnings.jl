@@ -9,9 +9,8 @@ abstract type AbstractBinningConfig end
 
 # abstract type AbstractAlphaBetaConfig <: AbstractBinningConfig end
 
-# export Uniform, SampledQuantile, LinearQuantile, InvertedQuantile,
-#     AvgInvertedQuantile, MedianUnbiasedQuantile, NormalUnbiasedQuantile
-export Uniform, Quantile
+export Uniform, Quantile, Jenks
+include("jenks.jl")
 include("structs.jl")
 
 # export bin

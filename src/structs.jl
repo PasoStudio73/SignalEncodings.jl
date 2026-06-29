@@ -9,6 +9,12 @@ const AlphaBetaQuantiles = Dict(
     :matlab => (0.5, 0.5)
 )
 
+const JenksErrNorm = Dict(
+    :l1 => (lin_deviation, are),
+    :l2 => (sq_deviation, gvf)
+)
+const JenksInitMode = [:maxentropy, :rand]
+
 """
 max_nobs::Int determine how many rows to sample for the quantile estimation.
 The heuristic 1000 * nbins means “allow roughly 1000 observations per bin”.
@@ -54,14 +60,61 @@ struct Quantile{S<:Float} <: AbstractBinningConfig
     end
 end
 
-function check_parameters(type::Symbol)
-    @assert haskey(AlphaBetaQuantiles, type)
-        "type must be one of $(keys(AlphaBetaQuantiles)), got :$type"
+struct Jenks{S<:Float} <: AbstractBinningConfig
+    nbins::UInt8
+    maxiter::Int
+    flux::Real
+    fluxadjust::Real
+    fluxadjust_bothways::Bool
+    errornorm::Tuple{Base.Callable,Base.Callable}
+    initmode::Symbol
+    max_nobs::Int
+    rng::AbstractRNG
+
+    function Jenks(;
+        nbins::Int=64,
+        maxiter::Int=200,
+        flux::Real=0.1,
+        fluxadjust::Real=1.03,
+        fluxadjust_bothways::Bool=true,
+        errornorm::Symbol=:l1,
+        initmode::Symbol=:maxentropy,
+        max_nobs::Int=1000,
+        rng::AbstractRNG=Xoshiro(42),
+        float_type::Type{S}=Float32
+    ) where {S<:Float}
+        check_parameters(nbins, max_nobs)
+        check_parameters(errornorm, initmode)
+
+        new{float_type}(
+            nbins,
+            maxiter,
+            flux,
+            fluxadjust,
+            fluxadjust_bothways,
+            JenksErrNorm[errornorm],
+            initmode,
+            max_nobs,
+            rng
+        )
+    end
 end
 
 function check_parameters(nbins::Int, max_nobs::Int)
     @assert 2 ≤ nbins ≤ 255 "nbins must be in [2, 255], got $nbins"
     @assert max_nobs ≥ 1 "max_nobs must be ≥ 1, got $max_nobs"
+end
+
+function check_parameters(type::Symbol)
+    @assert haskey(AlphaBetaQuantiles, type)
+        "type must be one of $(keys(AlphaBetaQuantiles)), got :$type"
+end
+
+function check_parameters(errornorm::Symbol, initmode::Symbol)
+    @assert haskey(JenksErrNorm, errornorm)
+        "errornorm must be one of $(keys(JenksErrNorm)), got :$errornorm"
+    @assert initmode in JenksInitMode
+        "initmode must be one of $(keys(JenksInitMode)), got :$initmode"
 end
 
 get_nbins(b::AbstractBinningConfig) = b.nbins
