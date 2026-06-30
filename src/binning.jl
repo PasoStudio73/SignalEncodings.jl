@@ -44,8 +44,8 @@ function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
     fluxadjust = get_fluxadjust(config)
     deviation = get_deviation(config)
 
-    sort!(x)
-    ndata = length(x)
+    _x = sort(x)
+    ndata = length(_x)
 
     np = ndata ÷ nbins
     breaks = [1:np:np*nbins; ndata+1]
@@ -60,7 +60,7 @@ function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
         for iclass in 1:nbins
             devs[iclass] =
                 deviation(
-                    @view(x[breaks[iclass]:breaks[iclass+1]-1])
+                    @view(_x[breaks[iclass]:breaks[iclass+1]-1])
                 )
         end
 
@@ -96,9 +96,9 @@ function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
     end
 
     breaks[end] = breaks[end] - 1
-    edges = x[breaks]
-    # length(edges) == 1 && (edges = [minimum(view(x, idxs))])
-    x_bin = searchsortedfirst.(Ref(edges), x)
+    edges = _x[breaks][1:end-1]
+    length(edges) == 1 && (edges = [minimum(view(x, idxs))])
+    x_bin = searchsortedlast.(Ref(edges), x)
 
     return x_bin, edges
 end

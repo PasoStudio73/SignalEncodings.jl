@@ -4,13 +4,15 @@ version = "1.0.0-DEV"
 authors = ["Riccardo PASINI"]
 
 [deps]
+CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+CategoricalArrays = "1.1.1"
 Random = "1"
-Statistics = "1.11.1"
+Statistics = "1"
 StatsBase = "0.34"
 julia = "1"
 

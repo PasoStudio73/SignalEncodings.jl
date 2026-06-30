@@ -4,6 +4,8 @@ using Random: AbstractRNG, Xoshiro
 using StatsBase: mean, sample
 using Statistics: quantile
 
+using CategoricalArrays
+
 abstract type AbstractBinningConfig end
 
 function lin_deviation(x::AbstractVector{T}) where {T<:Real}

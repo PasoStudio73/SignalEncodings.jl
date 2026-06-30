@@ -1,7 +1,7 @@
 using Test
 using Binnings
 
-using DataFrames, Random
+using DataFrames, StableRNGs
 using RDatasets
 
 # ---------------------------------------------------------------------------- #
