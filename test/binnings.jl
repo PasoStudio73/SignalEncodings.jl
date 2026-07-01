@@ -2,12 +2,10 @@ using Test
 using Binnings
 
 using SoleData
-
-using DataFrames, StableRNGs
-using MLJ
+using DataFrames, StableRNGs, MLJ
 
 # ---------------------------------------------------------------------------- #
-#                                load dataset                                  #
+#                                   tabular                                    #
 # ---------------------------------------------------------------------------- #
 Xc, yc = @load_iris
 Xc = Matrix(DataFrame(Xc))
@@ -38,7 +36,7 @@ config = Binnings.Jenks(;nbins=32)
 X_bin, edges = bin(config, Xts)
 
 # ---------------------------------------------------------------------------- #
-#                             multi dimensional                                #
+#                                   images                                     #
 # ---------------------------------------------------------------------------- #
 rng = StableRNG(42)
 X = [round.(rand(rng, Float32, 2, 2); digits=2) for i in 1:3, j in 1:2]
@@ -52,6 +50,9 @@ X_bin, edges = bin(config, X)
 config = Binnings.Jenks(;nbins=3)
 X_bin, edges = bin(config, X)
 
+# ---------------------------------------------------------------------------- #
+#                             multi dimensional                                #
+# ---------------------------------------------------------------------------- #
 rng = StableRNG(42)
 X4 = [round.(rand(rng, Float32, 3, 2, 2); digits=2) for i in 1:3, j in 1:2]
 
