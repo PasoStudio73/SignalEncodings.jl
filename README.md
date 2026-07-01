@@ -1,4 +1,6 @@
-# Binnings
+<div align="center">
+    <img src="banner.png" alt="DataTreatments" width="900">
+</div>
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://PasoStudio73.github.io/Binnings.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://PasoStudio73.github.io/Binnings.jl/dev/)
