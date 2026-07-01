@@ -5,62 +5,118 @@ using SoleData
 using DataFrames, StableRNGs, MLJ
 
 # ---------------------------------------------------------------------------- #
+#                                  utilities                                   #
+# ---------------------------------------------------------------------------- #
+function _collect_numbers(x, acc = Float64[])
+    if x isa Number
+        push!(acc, float(x))
+    elseif x isa AbstractArray || x isa Tuple
+        for v in x
+            _collect_numbers(v, acc)
+        end
+    end
+    return acc
+end
+
+function _count_numbers(x)
+    if x isa Number
+        return 1
+    elseif x isa AbstractArray || x isa Tuple
+        s = 0
+        for v in x
+            s += _count_numbers(v)
+        end
+        return s
+    end
+    return 0
+end
+
+function _assert_binning_output(X_bin, edges, X_in, nbins::Int)
+    # Some backends return feature-wise containers instead of preserving outer shape.
+    @test _count_numbers(X_bin) == _count_numbers(X_in)
+
+    bvals = _collect_numbers(X_bin)
+    @test !isempty(bvals)
+    @test all(isfinite, bvals)
+
+    bints = Int.(round.(bvals))
+    @test all(==(0), abs.(bvals .- bints))  # bins should be integral ids
+
+    bmin, bmax = extrema(bints)
+    @test bmin >= 0
+    @test bmax <= nbins + 1
+    @test length(unique(bints)) <= nbins + 1
+
+    evals = _collect_numbers(edges)
+    @test !isempty(evals)
+    @test all(isfinite, evals)
+end
+
+# ---------------------------------------------------------------------------- #
 #                                   tabular                                    #
 # ---------------------------------------------------------------------------- #
-Xc, yc = @load_iris
-Xc = Matrix(DataFrame(Xc))
+@testset "binning: tabular" begin
+    Xc, yc = @load_iris
+    Xc = Matrix(DataFrame(Xc))
 
-config = Binnings.Uniform(;nbins=16)
-X_bin, edges = bin(config, Xc)
-
-config = Binnings.Quantile(;nbins=16)
-X_bin, edges = bin(config, Xc)
-
-config = Binnings.Jenks(;nbins=16)
-X_bin, edges = bin(config, Xc)
+    for config in (
+        Binnings.Uniform(; nbins = 16),
+        Binnings.Quantile(; nbins = 16),
+        Binnings.Jenks(; nbins = 16),
+    )
+        X_bin, edges = bin(config, Xc)
+        _assert_binning_output(X_bin, edges, Xc, 16)
+    end
+end
 
 # ---------------------------------------------------------------------------- #
 #                                time series                                   #
 # ---------------------------------------------------------------------------- #
-natopsloader = SoleData.Artifacts.NatopsLoader()
-Xts, yts = SoleData.Artifacts.load(natopsloader)
-Xts = Matrix(Xts)
+@testset "binning: time series" begin
+    natopsloader = SoleData.Artifacts.NatopsLoader()
+    Xts, yts = SoleData.Artifacts.load(natopsloader)
+    Xts = Matrix(Xts)
 
-config = Binnings.Uniform(;nbins=32)
-X_bin, edges = bin(config, Xts)
-
-config = Binnings.Quantile(;nbins=32)
-X_bin, edges = bin(config, Xts)
-
-config = Binnings.Jenks(;nbins=32)
-X_bin, edges = bin(config, Xts)
+    for config in (
+        Binnings.Uniform(; nbins = 32),
+        Binnings.Quantile(; nbins = 32),
+        Binnings.Jenks(; nbins = 32),
+    )
+        X_bin, edges = bin(config, Xts)
+        _assert_binning_output(X_bin, edges, Xts, 32)
+    end
+end
 
 # ---------------------------------------------------------------------------- #
 #                                   images                                     #
 # ---------------------------------------------------------------------------- #
-rng = StableRNG(42)
-X = [round.(rand(rng, Float32, 2, 2); digits=2) for i in 1:3, j in 1:2]
+@testset "binning: images" begin
+    rng = StableRNG(42)
+    X = [round.(rand(rng, Float32, 2, 2); digits = 2) for _ in 1:3, _ in 1:2]
 
-config = Binnings.Uniform(;nbins=3)
-X_bin, edges = bin(config, X)
-
-config = Binnings.Quantile(;nbins=3)
-X_bin, edges = bin(config, X)
-
-config = Binnings.Jenks(;nbins=3)
-X_bin, edges = bin(config, X)
+    for config in (
+        Binnings.Uniform(; nbins = 3),
+        Binnings.Quantile(; nbins = 3),
+        Binnings.Jenks(; nbins = 3),
+    )
+        X_bin, edges = bin(config, X)
+        _assert_binning_output(X_bin, edges, X, 3)
+    end
+end
 
 # ---------------------------------------------------------------------------- #
 #                             multi dimensional                                #
 # ---------------------------------------------------------------------------- #
-rng = StableRNG(42)
-X4 = [round.(rand(rng, Float32, 3, 2, 2); digits=2) for i in 1:3, j in 1:2]
+@testset "binning: multi-dimensional tensors" begin
+    rng = StableRNG(42)
+    X4 = [round.(rand(rng, Float32, 3, 2, 2); digits = 2) for _ in 1:3, _ in 1:2]
 
-config = Binnings.Uniform(;nbins=3)
-X_bin, edges = bin(config, X4)
-
-config = Binnings.Quantile(;nbins=3)
-X_bin, edges = bin(config, X4)
-
-config = Binnings.Jenks(;nbins=3)
-X_bin, edges = bin(config, X4)
+    for config in (
+        Binnings.Uniform(; nbins = 3),
+        Binnings.Quantile(; nbins = 3),
+        Binnings.Jenks(; nbins = 3),
+    )
+        X_bin, edges = bin(config, X4)
+        _assert_binning_output(X_bin, edges, X4, 3)
+    end
+end
