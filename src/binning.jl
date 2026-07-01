@@ -19,7 +19,7 @@ function bin(config::Uniform, x::AbstractVector{T}) where {T<:Real}
 
     edges = collect(range(minimum(x), maximum(x); length=nbins))
     length(edges) == 1 && (edges = [minimum(view(x, idxs))])
-    x_bin = searchsortedfirst.(Ref(edges), x)
+    x_bin = UInt8.(searchsortedfirst.(Ref(edges), x))
 
     return x_bin, edges
 end
@@ -31,9 +31,10 @@ function bin(config::Quantile, x::AbstractVector{T}) where {T<:Real}
 
     idxs = get_idxs(x, max_nobs, nbins, rng)
 
-    edges = quantile(view(x, idxs), (1:nbins-1) / nbins; alpha, beta)
+    edges = T.(quantile(view(x, idxs), (1:nbins-1) / nbins; alpha, beta))
+    edges = vcat(minimum(x), edges)
     length(edges) == 1 && (edges = [minimum(view(x, idxs))])
-    x_bin = searchsortedfirst.(Ref(edges), x)
+    x_bin = UInt8.(searchsortedfirst.(Ref(edges), x))
 
     return x_bin, edges
 end
@@ -98,7 +99,7 @@ function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
     breaks[end] = breaks[end] - 1
     edges = _x[breaks][1:end-1]
     length(edges) == 1 && (edges = [minimum(view(x, idxs))])
-    x_bin = searchsortedlast.(Ref(edges), x)
+    x_bin = UInt8.(searchsortedlast.(Ref(edges), x))
 
     return x_bin, edges
 end
@@ -122,5 +123,20 @@ function bin(
     config::BinningConfig,
     X::Matrix{<:AbstractArray{T}}
 ) where {T<:Real}
+    Xs = collect.(Iterators.flatten(x) for x in eachcol(X))
+    bins = [bin(config, x) for x in Xs]
 
+    el_shape = size(first(X))
+    dims = length(el_shape)
+    nrows = size(X, 1)
+
+    columns = [
+        collect(eachslice(reshape(bins, el_shape..., nrows), dims=2))
+        for (bins, _) in bins
+    ]
+
+    X_bin = reduce(hcat, columns)
+    edges = [edge for (_, edge) in bins]
+
+    return X_bin, edges
 end
