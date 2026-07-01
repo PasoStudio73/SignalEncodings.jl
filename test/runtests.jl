@@ -1,6 +1,10 @@
 using Test
 using Binnings
 
+using SoleData: Artifacts
+# fill your Artifacts.toml file;
+Artifacts.fillartifacts()
+
 function run_tests(list)
     println("\n" * ("#"^50))
     for test in list
