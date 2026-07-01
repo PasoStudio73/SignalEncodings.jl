@@ -54,3 +54,12 @@ X_bin, edges = bin(config, X)
 
 rng = StableRNG(42)
 X4 = [round.(rand(rng, Float32, 3, 2, 2); digits=2) for i in 1:3, j in 1:2]
+
+config = Binnings.Uniform(;nbins=3)
+X_bin, edges = bin(config, X4)
+
+config = Binnings.Quantile(;nbins=3)
+X_bin, edges = bin(config, X4)
+
+config = Binnings.Jenks(;nbins=3)
+X_bin, edges = bin(config, X4)

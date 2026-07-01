@@ -123,20 +123,24 @@ function bin(
     config::BinningConfig,
     X::Matrix{<:AbstractArray{T}}
 ) where {T<:Real}
-    Xs = collect.(Iterators.flatten(x) for x in eachcol(X))
-    bins = [bin(config, x) for x in Xs]
-
+    nrows, ncols = size(X)
     el_shape = size(first(X))
-    dims = length(el_shape)
-    nrows = size(X, 1)
+    el_len = prod(el_shape)
 
-    columns = [
-        collect(eachslice(reshape(bins, el_shape..., nrows), dims=2))
-        for (bins, _) in bins
-    ]
+    bins = Vector{Tuple{Vector{UInt8}, Vector}}(undef, ncols)
+    Threads.@threads for j in 1:ncols
+        # stack flattens all elements in column j into a (el_len × nrows) matrix, then vec it
+        flat = vec(stack(vec, view(X, :, j)))  # length = nrows * el_len
+        bins[j] = bin(config, flat)
+    end
 
-    X_bin = reduce(hcat, columns)
-    edges = [edge for (_, edge) in bins]
+    edges = last.(bins)
 
-    return X_bin, edges
+    X_bin = map(1:ncols) do j
+        flat_bin = first(bins[j])          # length = nrows * el_len
+        arr = reshape(flat_bin, el_shape..., nrows)
+        [copy(selectdim(arr, ndims(arr), i)) for i in 1:nrows]
+    end
+
+    return reshape(reduce(hcat, X_bin), nrows, ncols), edges
 end
