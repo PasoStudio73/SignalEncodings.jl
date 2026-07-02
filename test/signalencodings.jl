@@ -1,5 +1,5 @@
 using Test
-using Binnings
+using SignalEncodings
 
 using SoleData
 using DataFrames, StableRNGs, MLJ
@@ -31,7 +31,7 @@ function _count_numbers(x)
     return 0
 end
 
-function _assert_binning_output(X_bin, edges, X_in, nbins::Int)
+function _assert_encoding_output(X_bin, edges, X_in, nbins::Int)
     # Some backends return feature-wise containers instead of preserving outer shape.
     @test _count_numbers(X_bin) == _count_numbers(X_in)
 
@@ -55,68 +55,69 @@ end
 # ---------------------------------------------------------------------------- #
 #                                   tabular                                    #
 # ---------------------------------------------------------------------------- #
-@testset "binning: tabular" begin
+@testset "encoding: tabular" begin
     Xc, yc = @load_iris
     Xc = Matrix(DataFrame(Xc))
 
     for config in (
-        Binnings.Uniform(; nbins = 16),
-        Binnings.Quantile(; nbins = 16),
-        Binnings.Jenks(; nbins = 16),
+        SignalEncodings.Uniform(; nbins = 16),
+        SignalEncodings.Quantile(; nbins = 16),
+        SignalEncodings.Jenks(; nbins = 16),
     )
-        X_bin, edges = bin(config, Xc)
-        _assert_binning_output(X_bin, edges, Xc, 16)
+        X_bin, edges = encode(config, Xc)
+        _assert_encoding_output(X_bin, edges, Xc, 16)
     end
 end
 
 # ---------------------------------------------------------------------------- #
 #                                time series                                   #
 # ---------------------------------------------------------------------------- #
-@testset "binning: time series" begin
+@testset "encoding: time series" begin
     natopsloader = SoleData.Artifacts.NatopsLoader()
     Xts, yts = SoleData.Artifacts.load(natopsloader)
     Xts = Matrix(Xts)
 
     for config in (
-        Binnings.Uniform(; nbins = 32),
-        Binnings.Quantile(; nbins = 32),
-        Binnings.Jenks(; nbins = 32),
+        SignalEncodings.Uniform(; nbins = 32),
+        SignalEncodings.Quantile(; nbins = 32),
+        SignalEncodings.Jenks(; nbins = 32),
     )
-        X_bin, edges = bin(config, Xts)
-        _assert_binning_output(X_bin, edges, Xts, 32)
+        X_bin, edges = encode(config, Xts)
+        _assert_encoding_output(X_bin, edges, Xts, 32)
     end
 end
 
 # ---------------------------------------------------------------------------- #
 #                                   images                                     #
 # ---------------------------------------------------------------------------- #
-@testset "binning: images" begin
+@testset "encoding: images" begin
     rng = StableRNG(42)
     X = [round.(rand(rng, Float32, 2, 2); digits = 2) for _ in 1:3, _ in 1:2]
 
     for config in (
-        Binnings.Uniform(; nbins = 3),
-        Binnings.Quantile(; nbins = 3),
-        Binnings.Jenks(; nbins = 3),
+        SignalEncodings.Uniform(; nbins = 3),
+        SignalEncodings.Quantile(; nbins = 3),
+        SignalEncodings.Jenks(; nbins = 3),
     )
-        X_bin, edges = bin(config, X)
-        _assert_binning_output(X_bin, edges, X, 3)
+        X_bin, edges = encode(config, X)
+        _assert_encoding_output(X_bin, edges, X, 3)
     end
 end
 
 # ---------------------------------------------------------------------------- #
 #                             multi dimensional                                #
 # ---------------------------------------------------------------------------- #
-@testset "binning: multi-dimensional tensors" begin
+@testset "encoding: multi-dimensional tensors" begin
     rng = StableRNG(42)
-    X4 = [round.(rand(rng, Float32, 3, 2, 2); digits = 2) for _ in 1:3, _ in 1:2]
+    X4 = [round.(rand(rng, Float32, 3, 2, 2); digits = 2)
+        for _ in 1:3, _ in 1:2]
 
     for config in (
-        Binnings.Uniform(; nbins = 3),
-        Binnings.Quantile(; nbins = 3),
-        Binnings.Jenks(; nbins = 3),
+        SignalEncodings.Uniform(; nbins = 3),
+        SignalEncodings.Quantile(; nbins = 3),
+        SignalEncodings.Jenks(; nbins = 3),
     )
-        X_bin, edges = bin(config, X4)
-        _assert_binning_output(X_bin, edges, X4, 3)
+        X_bin, edges = encode(config, X4)
+        _assert_encoding_output(X_bin, edges, X4, 3)
     end
 end

@@ -2,14 +2,14 @@
     <img src="banner.png" alt="DataTreatments" width="900">
 </div>
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://PasoStudio73.github.io/Binnings.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://PasoStudio73.github.io/Binnings.jl/dev/)
-[![Build Status](https://github.com/PasoStudio73/Binnings.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/PasoStudio73/Binnings.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/PasoStudio73/Binnings.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/PasoStudio73/Binnings.jl)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://PasoStudio73.github.io/SignalEncodings.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://PasoStudio73.github.io/SignalEncodings.jl/dev/)
+[![Build Status](https://github.com/PasoStudio73/SignalEncodings.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/PasoStudio73/SignalEncodings.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/PasoStudio73/SignalEncodings.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/PasoStudio73/SignalEncodings.jl)
 
 A Julia package for **discretizing numeric signals into bins** (a.k.a. quantization).
 
-`Binnings.jl` provides three algorithms — uniform, quantile, and Jenks-style iterative —
+`SignalEncodings.jl` provides three algorithms — uniform, quantile, and Jenks-style iterative —
 and supports a wide range of input layouts:
 
 - **scalar vectors** (1-D signals)
@@ -24,7 +24,7 @@ and supports a wide range of input layouts:
 
 ```julia
 using Pkg
-Pkg.add("Binnings")
+Pkg.add("SignalEncodings")
 ```
 
 ---
@@ -46,7 +46,7 @@ All configs share `nbins`, `max_nobs`, and `rng` for a uniform interface.
 ### Tabular data
 
 ```julia
-using Binnings
+using SignalEncodings
 
 X = rand(Float32, 100, 4)   # 100 samples, 4 features
 

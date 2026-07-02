@@ -1,10 +1,10 @@
 ```@meta
-CurrentModule = Binnings
+CurrentModule = SignalEncodings
 ```
 
-# Binnings
+# SignalEncodings
 
-`Binnings.jl` is a Julia package for **discretizing numeric signals into bins**
+`SignalEncodings.jl` is a Julia package for **discretizing numeric signals into bins**
 (a.k.a. quantization).
 
 It provides a common interface for converting continuous values into integer bin
@@ -25,7 +25,7 @@ The package is designed to work with several input layouts, including:
 ## Quick start
 
 ```julia
-using Binnings
+using SignalEncodings
 
 X = rand(Float32, 100, 4)
 
@@ -67,7 +67,7 @@ The original shape is preserved for multidimensional inputs.
 ```
 
 ```@autodocs
-Modules = [Binnings]
+Modules = [SignalEncodings]
 ```
 
 ## License

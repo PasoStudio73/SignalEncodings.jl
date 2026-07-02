@@ -4,7 +4,7 @@
 """
     get_idxs(x, max_nobs, nbins, rng)
 
-Return observation indices used to estimate bin edges.
+Return observation indices used to estimate encode edges.
 
 If `length(x) > max_nobs * nbins`, a reproducible, ordered sample without
 replacement is drawn using `rng`. Otherwise, all indices are returned.
@@ -26,20 +26,20 @@ function get_idxs(
 end
 
 # ---------------------------------------------------------------------------- #
-#                                     bin                                      #
+#                                    encode                                    #
 # ---------------------------------------------------------------------------- #
 """
-    bin(config::Uniform, x)
+    encode(config::Uniform, x)
 
 Discretize a numeric vector `x` into uniformly spaced bins.
 
 Edges are linearly spaced between `minimum(x)` and `maximum(x)`.
 Returns:
 
-- `x_bin::Vector{UInt8}`: 1-based bin index for each value in `x`
-- `edges::Vector`: bin edge values used for discretization
+- `x_bin::Vector{UInt8}`: 1-based encode index for each value in `x`
+- `edges::Vector`: encode edge values used for discretization
 """
-function bin(config::Uniform, x::AbstractVector{T}) where {T<:Real}
+function encode(config::Uniform, x::AbstractVector{T}) where {T<:Real}
     nbins, max_nobs, rng =
         get_nbins(config), get_max_nobs(config), get_rng(config)
 
@@ -53,15 +53,15 @@ function bin(config::Uniform, x::AbstractVector{T}) where {T<:Real}
 end
 
 """
-    bin(config::Quantile, x)
+    encode(config::Quantile, x)
 
 Discretize a numeric vector `x` using quantile-based bins.
 
 Internal edges are computed from quantiles of sampled observations (`get_idxs`),
 with interpolation controlled by `alpha` and `beta` from `config`.
-Returns `(x_bin, edges)` where `x_bin` contains 1-based bin indices.
+Returns `(x_bin, edges)` where `x_bin` contains 1-based encode indices.
 """
-function bin(config::Quantile, x::AbstractVector{T}) where {T<:Real}
+function encode(config::Quantile, x::AbstractVector{T}) where {T<:Real}
     nbins, max_nobs, rng =
         get_nbins(config), get_max_nobs(config), get_rng(config)
     alpha, beta = get_alpha(config), get_beta(config)
@@ -77,15 +77,15 @@ function bin(config::Quantile, x::AbstractVector{T}) where {T<:Real}
 end
 
 """
-    bin(config::Jenks, x)
+    encode(config::Jenks, x)
 
 Discretize a numeric vector `x` with an iterative Jenks-style optimization.
 
-The algorithm adjusts class breaks to reduce within-bin deviation using the
+The algorithm adjusts class breaks to reduce within-encode deviation using the
 configured deviation function and flux parameters. Returns `(x_bin, edges)`,
-where `x_bin` are 1-based bin indices and `edges` are learned break values.
+where `x_bin` are 1-based encode indices and `edges` are learned break values.
 """
-function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
+function encode(config::Jenks, x::AbstractVector{T}) where {T<:Real}
     nbins, maxiter = get_nbins(config), get_maxiter(config)
     fluxadjust_bothways = get_fluxadjust_bothways(config)
     fluxadjust = get_fluxadjust(config)
@@ -95,54 +95,52 @@ function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
     ndata = length(_x)
 
     np = ndata ÷ nbins
-    breaks = [1:np:np*nbins; ndata+1]
+    breaks = Vector{Int}([1:np:np*nbins; ndata+1])
     
     fluxes = fill(get_flux(config),nbins-1)
-    devs = Vector(undef,nbins)
-    devs_pre = Vector(undef,nbins)
+    devs = Vector{T}(undef,nbins)
+    devs_pre = Vector{T}(undef,nbins)
 
-    for iter in 1:maxiter
-        devs_pre .= devs
-
+    function update_devs!(devs, _x, breaks, nbins)
         for iclass in 1:nbins
-            devs[iclass] =
-                deviation(
-                    @view(_x[breaks[iclass]:breaks[iclass+1]-1])
-                )
+            devs[iclass] = deviation(@view(_x[breaks[iclass]:breaks[iclass+1]-1]))
         end
+    end
+
+    update_devs!(devs, _x, breaks, nbins)
+
+    for iter in 2:maxiter
+        copyto!(devs_pre, devs)
+        update_devs!(devs, _x, breaks, nbins)
 
         for iclass in 1:nbins-1
-            a, b, c = breaks[iclass:iclass+2]
+            a = breaks[iclass]
+            b = breaks[iclass+1]
+            c = breaks[iclass+2]
+            lo_min = a + 1
+            hi_max = c - 1
+
             if devs[iclass] < devs[iclass+1]
-                if iter > 1
-                    if devs_pre[iclass] >= devs_pre[iclass+1]
-                        fluxes[iclass] /= fluxadjust
-                    elseif fluxadjust_bothways
-                        fluxes[iclass] *= fluxadjust
-                    end
+                if devs_pre[iclass] ≥ devs_pre[iclass+1]
+                    fluxes[iclass] /= fluxadjust
+                elseif fluxadjust_bothways
+                    fluxes[iclass] *= fluxadjust
                 end
-
-                cs_factor = Int(round((b-a)*fluxes[iclass]))
-                newbreak = breaks[iclass+1]+cs_factor
-                breaks[iclass+1] = min(newbreak,breaks[iclass+2]-2)
+                newbreak = b + Int(round((b - a) * fluxes[iclass]))
+                breaks[iclass+1] = clamp(newbreak, lo_min, hi_max)
             else
-
-                if iter > 1
-                    if devs_pre[iclass] <= devs_pre[iclass+1]
-                        fluxes[iclass] /= fluxadjust
-                    elseif fluxadjust_bothways
-                        fluxes[iclass] *= fluxadjust
-                    end
+                if devs_pre[iclass] ≤ devs_pre[iclass+1]
+                    fluxes[iclass] /= fluxadjust
+                elseif fluxadjust_bothways
+                    fluxes[iclass] *= fluxadjust
                 end
-
-                cs_factor = Int(round((c-b)*fluxes[iclass]))
-                newbreak = breaks[iclass+1]-cs_factor
-                breaks[iclass+1] = max(newbreak,breaks[iclass]+2)
+                newbreak = b - Int(round((c - b) * fluxes[iclass]))
+                breaks[iclass+1] = clamp(newbreak, lo_min, hi_max)
             end
         end
     end
 
-    breaks[end] = breaks[end] - 1
+    breaks[end] -= 1
     edges = _x[breaks][1:end-1]
     length(edges) == 1 && (edges = [minimum(view(x, idxs))])
     x_bin = UInt8.(searchsortedlast.(Ref(edges), x))
@@ -151,7 +149,7 @@ function bin(config::Jenks, x::AbstractVector{T}) where {T<:Real}
 end
 
 """
-    bin(config, X::AbstractArray{T})
+    encode(config, X::AbstractArray{T})
 
 Feature-wise binning for tabular numeric data (`n_samples × n_features`).
 
@@ -160,7 +158,7 @@ Each column is binned independently (threaded), returning:
 - `X_bin::Vector{Vector{UInt8}}`: one binned vector per feature
 - `edges::Vector{Vector}`: one edge vector per feature
 """
-function bin(
+function encode(
     config::BinningConfig,
     X::AbstractArray{T}
 ) where {T<:Real}
@@ -169,21 +167,21 @@ function bin(
     X_bin = Vector{Vector{UInt8}}(undef, nfeats)
 
     Threads.@threads for j in 1:nfeats
-        X_bin[j], edges[j] = bin(config, view(X, :, j))
+        X_bin[j], edges[j] = encode(config, view(X, :, j))
     end
 
     return X_bin, edges
 end
 
 """
-    bin(config, X::Matrix{<:AbstractArray{T}})
+    encode(config, X::Matrix{<:AbstractArray{T}})
 
 Binning for datasets where each cell is a multidimensional item
 (e.g., time series vectors, images, or tensors).
 
 For each column/feature:
 1. all per-row items are flattened and concatenated,
-2. bin edges are learned once on the flattened values,
+2. encode edges are learned once on the flattened values,
 3. binned values are reshaped back to each original item shape.
 
 Returns:
@@ -192,7 +190,7 @@ Returns:
   preserved.
 - `edges::Vector{Vector}` with one edge vector per column.
 """
-function bin(
+function encode(
     config::BinningConfig,
     X::Matrix{<:AbstractArray{T}}
 ) where {T<:Real}
@@ -203,7 +201,7 @@ function bin(
     bins = Vector{Tuple{Vector{UInt8}, Vector}}(undef, ncols)
     Threads.@threads for j in 1:ncols
         flat = vec(stack(vec, view(X, :, j)))
-        bins[j] = bin(config, flat)
+        bins[j] = encode(config, flat)
     end
 
     edges = last.(bins)

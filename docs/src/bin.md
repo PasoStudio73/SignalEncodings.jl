@@ -1,10 +1,10 @@
 ```@meta
-CurrentModule = Binnings
+CurrentModule = SignalEncodings
 ```
 
-# Binning functions
+# SignalEncodings functions
 
-This page documents the `bin` methods provided by `Binnings.jl`.
+This page documents the `bin` methods provided by `SignalEncodings.jl`.
 
 `bin` converts numeric data into integer bin indices and returns a tuple of:
 

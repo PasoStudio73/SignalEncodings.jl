@@ -1,4 +1,4 @@
-module Binnings
+module SignalEncodings
 
 using Random: AbstractRNG, Xoshiro
 using StatsBase: mean, sample
@@ -39,7 +39,7 @@ end
 export Uniform, Quantile, Jenks
 include("structs.jl")
 
-export bin
-include("binning.jl")
+export encode
+include("encode.jl")
 
 end

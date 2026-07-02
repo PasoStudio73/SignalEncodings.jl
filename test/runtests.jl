@@ -1,5 +1,5 @@
 using Test
-using Binnings
+using SignalEncodings
 
 using SoleData: Artifacts
 # fill your Artifacts.toml file;
@@ -17,10 +17,10 @@ println("Julia version: ", VERSION)
 
 test_suites = [
     ("Deviation Funcs", ["deviations.jl"]),
-    ("Usage", ["binnings.jl"]),
+    ("Usage", ["signalencodings.jl"]),
 ]
 
-@testset "Binnings.jl" begin
+@testset "SignalEncodings.jl" begin
     for ts in eachindex(test_suites)
         name = test_suites[ts][1]
         list = test_suites[ts][2]

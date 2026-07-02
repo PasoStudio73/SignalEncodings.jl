@@ -1,10 +1,10 @@
 ```@meta
-CurrentModule = Binnings
+CurrentModule = SignalEncodings
 ```
 
 # [Algorithms](@id algorithms)
 
-`Binnings.jl` provides three discretization algorithms, each implementing a different
+`SignalEncodings.jl` provides three discretization algorithms, each implementing a different
 strategy for mapping continuous numeric values into a fixed number of integer bins.
 All algorithms share a common interface: they accept a configuration struct and return
 `(X_bin, edges)`, where `X_bin` contains `UInt8` bin indices and `edges` contains the
