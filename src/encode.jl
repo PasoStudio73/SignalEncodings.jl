@@ -69,9 +69,9 @@ function encode(config::Quantile, x::AbstractVector{T}) where {T<:Real}
     idxs = get_idxs(x, max_nobs, nbins, rng)
 
     edges = T.(quantile(view(x, idxs), (1:nbins-1) / nbins; alpha, beta))
-    edges = vcat(minimum(x), edges)
     length(edges) == 1 && (edges = [minimum(view(x, idxs))])
     x_bin = UInt8.(searchsortedfirst.(Ref(edges), x))
+    edges = vcat(minimum(x), edges)
 
     return x_bin, edges
 end
@@ -109,7 +109,7 @@ function encode(config::Jenks, x::AbstractVector{T}) where {T<:Real}
 
     update_devs!(devs, _x, breaks, nbins)
 
-    for iter in 2:maxiter
+    for _ in 2:maxiter
         copyto!(devs_pre, devs)
         update_devs!(devs, _x, breaks, nbins)
 
@@ -163,7 +163,7 @@ function encode(
     X::AbstractArray{T}
 ) where {T<:Real}
     nfeats = size(X, 2)
-    edges = Vector{Vector}(undef, nfeats)
+    edges = Vector{Vector{T}}(undef, nfeats)
     X_bin = Vector{Vector{UInt8}}(undef, nfeats)
 
     Threads.@threads for j in 1:nfeats
