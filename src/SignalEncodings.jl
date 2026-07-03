@@ -4,7 +4,7 @@ using Random: AbstractRNG, Xoshiro
 using StatsBase: mean, sample
 using Statistics: quantile
 
-abstract type AbstractBinningConfig end
+abstract type AbstractEncodingConfig end
 
 """
     lin_deviation(x::AbstractVector{T}) where {T<:Real}

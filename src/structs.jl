@@ -37,7 +37,7 @@ const JenksErrNorm = Dict(
 
 """
     Uniform(; nbins=64, max_nobs=1000, rng=Xoshiro(42))
-    Uniform <: AbstractBinningConfig
+    Uniform <: AbstractEncodingConfig
 
 Uniform-width discretization config.
 
@@ -52,7 +52,7 @@ Constructor keywords:
 - `max_nobs`: observations-per-bin cap factor.
 - `rng`: random generator used when sampling is required.
 """
-struct Uniform <: AbstractBinningConfig
+struct Uniform <: AbstractEncodingConfig
     nbins::UInt8
     max_nobs::Int
     rng::AbstractRNG
@@ -69,7 +69,7 @@ end
 
 """
     Quantile(; type=:linear, nbins=64, max_nobs=1000, rng=Xoshiro(42))
-    Quantile <: AbstractBinningConfig
+    Quantile <: AbstractEncodingConfig
 
 Quantile-based discretization config.
 
@@ -85,7 +85,7 @@ Constructor keywords:
 - `max_nobs`: observations-per-bin cap factor.
 - `rng`: random generator used when sampling is required.
 """
-struct Quantile <: AbstractBinningConfig
+struct Quantile <: AbstractEncodingConfig
     nbins::UInt8
     alpha::Float16
     beta::Float16
@@ -109,7 +109,7 @@ end
     Jenks(; nbins=64, maxiter=200, flux=0.1, fluxadjust=1.03,
             fluxadjust_bothways=true, errornorm=:l1, max_nobs=1000,
             rng=Xoshiro(42))
-    Jenks <: AbstractBinningConfig
+    Jenks <: AbstractEncodingConfig
 
 Jenks-style iterative discretization config.
 
@@ -128,7 +128,7 @@ Constructor keywords:
 - `errornorm`: `:l1` or `:l2`.
 - `max_nobs`, `rng`.
 """
-struct Jenks <: AbstractBinningConfig
+struct Jenks <: AbstractEncodingConfig
     nbins::UInt8
     maxiter::Int
     flux::Real
@@ -198,13 +198,13 @@ function check_errnorm(errornorm::Symbol)
 end
 
 "Return number of bins for any binning config."
-get_nbins(b::AbstractBinningConfig) = b.nbins
+get_nbins(b::AbstractEncodingConfig) = b.nbins
 
 "Return `max_nobs` sampling budget factor."
-get_max_nobs(b::AbstractBinningConfig) = b.max_nobs
+get_max_nobs(b::AbstractEncodingConfig) = b.max_nobs
 
 "Return RNG associated with config."
-get_rng(b::AbstractBinningConfig) = b.rng
+get_rng(b::AbstractEncodingConfig) = b.rng
 
 "Return quantile interpolation alpha parameter."
 get_alpha(b::Quantile) = b.alpha
