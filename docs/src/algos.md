@@ -74,24 +74,46 @@ each bin contains approximately the same number of observations.
 
 ## Jenks
 
-**Config:** `Jenks(; nbins=64, maxiter=200, flux=0.1, fluxadjust=1.03, fluxadjust_bothways=true, errornorm=:l1, max_nobs=1000, rng=Xoshiro(42))`
+**Config:** `Jenks(;
+   nbins=64,
+   maxiter=200,
+   flux=0.1,
+   fluxadjust=1.03,
+   fluxadjust_bothways=true,
+   errornorm=:l1,
+   max_nobs=1000,
+   rng=Xoshiro(42)
+)`
 
-The Jenks algorithm is an **iterative optimization** method inspired by Jenks natural
-breaks. It minimizes the total within-bin deviation by repeatedly shifting bin
-boundaries.
+The Jenks algorithm is an **iterative optimization** method inspired by Jenks
+natural breaks. It minimizes the total within-bin deviation by repeatedly
+shifting bin boundaries.
 
 ### Steps
 
-1. **Initialization**: bin edges are initialized (e.g., using quantile positions).
-2. **Iterative optimization**: at each iteration, each internal boundary is shifted
-   by a fraction `flux` of the local inter-edge spacing. The shift is accepted if it
-   reduces the total within-bin error according to the chosen `errornorm`.
-3. **Flux adaptation**: after each iteration, `flux` is multiplied by `fluxadjust`
-   if the error improved, or divided by `fluxadjust` if
-   `fluxadjust_bothways = true`, allowing the step size to grow or shrink adaptively.
-4. **Termination**: the loop stops after `maxiter` iterations or when no boundary
-   move reduces the error.
+1. **Initialization**: bin edges are initialized (e.g., using quantile
+   positions).
+2. **Iterative optimization**: at each iteration, each internal boundary is
+   shifted by a fraction `flux` of the local inter-edge spacing. The shift is
+   accepted if it reduces the total within-bin error according to the chosen
+   `errornorm`.
+3. **Flux adaptation**: after each iteration, `flux` is multiplied by 
+   `fluxadjust` if the error improved, or divided by `fluxadjust` if
+   `fluxadjust_bothways = true`, allowing the step size to grow or shrink
+   adaptively.
+4. **Termination**: the loop stops after `maxiter` iterations or when no
+   boundary move reduces the error.
 5. **Binning**: same as `Uniform`.
+
+## NoEncode
+The identity encoding — returns the input **unchanged**, with no binning or edge
+computation.
+
+### Usage
+
+```julia
+encode(NoEncode(),  X)
+```
 
 ### Error norms
 

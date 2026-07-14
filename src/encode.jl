@@ -149,6 +149,18 @@ function encode(config::Jenks, x::AbstractVector{T}) where {T<:Real}
 end
 
 """
+    encode(::NoEncode, X)
+
+Identity encoding — returns `X` unchanged.
+
+Use when no discretization is needed. Accepts any input type `T`.
+"""
+encode(::NoEncode, X::AbstractArray{T}) where T =
+    Vector.(eachcol(X)), Vector{Vector{T}}(undef, 0)
+encode(::NoEncode, X::Vector{T}) where T =
+    X, Vector{T}(undef, 0)
+
+"""
     encode(config, X::AbstractArray{T})
 
 Feature-wise binning for tabular numeric data (`n_samples × n_features`).

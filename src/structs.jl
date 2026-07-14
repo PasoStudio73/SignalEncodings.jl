@@ -165,6 +165,13 @@ struct Jenks <: AbstractEncodingConfig
 end
 
 """
+    NoEncode <: AbstractEncodingConfig
+
+A no-op encoding config. Use this when no discretization is needed.
+"""
+struct NoEncode <: AbstractEncodingConfig end
+
+"""
     check_parameters(nbins, max_nobs)
 
 Validate generic binning parameters.

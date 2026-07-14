@@ -36,7 +36,7 @@ function sq_deviation(x::AbstractVector{T}) where {T<:Real}
     return sum(xi -> (xi - μ)^2, x) 
 end
 
-export Uniform, Quantile, Jenks
+export Uniform, Quantile, Jenks, NoEncode
 include("structs.jl")
 
 export encode
